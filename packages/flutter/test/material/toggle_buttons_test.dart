@@ -52,6 +52,7 @@ void main() {
     );
   });
 
+
   testWidgets(
     'onPressed is triggered on button tap',
     (WidgetTester tester) async {
@@ -660,6 +661,75 @@ void main() {
     ));
     expect(material.color, customFillColor);
     expect(material.type, MaterialType.button);
+  });
+
+  testWidgets('Dynamic button fillColor', (WidgetTester tester) async {
+    const Color hoveredColor = Color(0x00000001);
+    const Color pressedColor = Color(0x00000002);
+    const Color focusedColor = Color(0x00000003);
+    const Color draggedColor = Color(0x00000004);
+    const Color disabledColor = Color(0x00000005);
+    const Color selectedColor = Color(0x00000006);
+    const Color defaultColor = Color(0x00000007);
+
+    Color resolveColor(Set<MaterialState> states) {
+      if (states.contains(MaterialState.hovered))
+        return hoveredColor;
+      if (states.contains(MaterialState.pressed))
+        return pressedColor;
+      if (states.contains(MaterialState.focused))
+        return focusedColor;
+      if (states.contains(MaterialState.dragged))
+        return draggedColor;
+      if (states.contains(MaterialState.disabled))
+        return disabledColor;
+      if (states.contains(MaterialState.selected))
+        return selectedColor;
+      return defaultColor;
+    }
+
+    Widget toggleButtonWidget({
+      List<bool> selected = const<bool> [false, false],
+    }) => Material(
+        child: boilerplate(
+          child: ToggleButtons(
+            color: MaterialStateColor.resolveWith(resolveColor),
+            isSelected: selected,
+            onPressed: (int index) {},
+            children: const <Widget>[
+              Text('First child'),
+              Text('Second child'),
+            ],
+          ),
+        ),
+      );
+
+    // Color _getColor(String keyName) => tester.widget<Text>(find.descendant(
+    //   of: find.byType(RawMaterialButton),
+    //   matching: find.byKey(Key(keyName)),
+    // )).style!.color!;
+    Color _getColor(String text) => tester.renderObject<RenderParagraph>(find.text(text)).text.style!.color!;
+    Color getFirstColor() => _getColor('First child');
+    Color getSecondColor() => _getColor('Second child');
+
+    // Default, not disabled.
+    print('flag 1');
+    await tester.pumpWidget(toggleButtonWidget());
+    expect(getFirstColor(), equals(defaultColor));
+    expect(getSecondColor(), equals(defaultColor));
+
+    // Selected.
+    print('flag 2');
+    await tester.pumpWidget(toggleButtonWidget(selected: const<bool> [true, false]));
+    expect(getFirstColor(), equals(selectedColor));
+    expect(getSecondColor(), equals(defaultColor));
+
+    // final Material material = tester.widget<Material>(find.descendant(
+    //   of: find.byType(RawMaterialButton),
+    //   matching: find.byType(Material),
+    // ));
+    // expect(material.color, customFillColor);
+    // expect(material.type, MaterialType.button);
   });
 
   testWidgets('Default InkWell colors - unselected', (WidgetTester tester) async {
